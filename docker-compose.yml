@@ -1,0 +1,66 @@
+version: '3.7'
+
+services:
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+    - "8080:8080"
+    - "8200:8200"
+    restart: always
+
+  app-home:
+    container_name: app-home
+    build:
+      context: ./app-home
+      dockerfile: Dockerfile    
+    ports:
+    - "8088:80"
+    restart: always
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    build:
+      context: ./phpmyadmin
+      dockerfile: Dockerfile
+    restart: always
+
+  mysql-db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: 'admin'
+    ports:
+    - "3306:3306"
+    volumes:
+    - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    restart: always
+
+  linear-regression:
+    container_name: linear-regression
+    build:
+      context: ./linear-regression
+      dockerfile: Dockerfile    
+    ports:
+    - "5000:5000"
+    restart: always
+
+  logistic-regression:
+    container_name: logistic-regression
+    build:
+      context: ./logistic-regression
+      dockerfile: Dockerfile    
+    ports:
+    - "5001:5001"
+    restart: always
+
+  random-forest:
+    container_name: random-forest
+    build:
+      context: ./random-forest
+      dockerfile: Dockerfile    
+    ports:
+    - "5002:5002"
+    restart: always
