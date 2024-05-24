@@ -4,6 +4,12 @@ FROM ubuntu:latest
 RUN apt-get update && apt-get install -y curl openjdk-11-jre-headless unzip && \
     rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y wget && \
+    wget -O /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 && \
+    chmod +x /usr/local/bin/jq && \
+    apt-get purge -y wget && apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 # Configuracion variables de entorno para Vault y Keycloak
 ENV VAULT_DEV_ROOT_TOKEN_ID=root \
     VAULT_ADDR=http://0.0.0.0:8200 \
@@ -11,7 +17,8 @@ ENV VAULT_DEV_ROOT_TOKEN_ID=root \
     VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 \
     VAULT_DISABLE_MLOCK=true \
     KEYCLOAK_ADMIN=admin \
-    KEYCLOAK_ADMIN_PASSWORD=admin
+    KEYCLOAK_ADMIN_PASSWORD=admin \
+    KEYCLOAK_URL=http://0.0.0.0:8080/auth
 
 # Descarga e instalacion de Keycloak y Vault
 WORKDIR /opt
@@ -22,11 +29,21 @@ RUN curl -L https://releases.hashicorp.com/vault/1.11.12/vault_1.11.12_linux_amd
     mv vault /usr/local/bin/ && \
     rm vault.zip
 
+COPY init-keycloak.sh /init-keycloak.sh
+
+RUN chmod +x /init-keycloak.sh
+
 # Creacion scripts inicio Keycloak y Vault
 RUN echo '#!/bin/bash\n\
 nohup /usr/local/bin/vault server -dev &\n\
-/opt/keycloak/bin/kc.sh start-dev\n\
+/opt/keycloak/bin/kc.sh start-dev &\n\
 ' > /start.sh && chmod +x /start.sh
+
+# Inicializacion Keycloak y Vault
+RUN /start.sh
+
+# API configuracion Keycloak
+RUN /init-keycloak.sh
 
 # Volumenes para Keycloak y Vault
 VOLUME ["/opt/keycloak/data", "/vault/file"]
