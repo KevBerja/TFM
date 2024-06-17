@@ -46,9 +46,9 @@ RUN /start.sh
 RUN /init-keycloak.sh
 
 # Volumenes para Keycloak y Vault
-VOLUME ["/opt/keycloak/data", "/vault/file"]
+# VOLUME ["/opt/keycloak/data", "/vault/file"]
 
 # Puertos de Keycloak y Vault
-EXPOSE 8080 8200
+# EXPOSE 8080 8200
 
 CMD ["/start.sh"]

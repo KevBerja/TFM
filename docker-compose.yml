@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.9'
 
 services:
   auth-service:
@@ -7,8 +7,13 @@ services:
       context: ./auth-service
       dockerfile: Dockerfile
     ports:
-    - "8080:8080"
-    - "8200:8200"
+      - "8080:8080"
+      - "8200:8200"
+    networks:
+      - tfm-net
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - vault_data:/vault/data
     restart: always
 
   app-home:
@@ -17,34 +22,46 @@ services:
       context: ./app-home
       dockerfile: Dockerfile    
     ports:
-    - "8088:80"
+      - "8088:80"
+    networks:
+      - tfm-net
     restart: always
 
   phpmyadmin:
     container_name: phpmyadmin
     build:
-      context: ./phpmyadmin
+      context: ./db/phpmyadmin
       dockerfile: Dockerfile
-    restart: always
-
-  mysql-db:
-    image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: 'admin'
     ports:
-    - "3366:3306"
+      - "8880:80"
+    networks:
+      - tfm-net
     volumes:
-    - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+      - phpmyadmin_data:/etc/phpmyadmin
     restart: always
 
+  db:
+    container_name: mysql
+    build:
+      context: ./db/mysql
+      dockerfile: Dockerfile
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - tfm-net
+    restart: always
+  
   linear-regression:
     container_name: linear-regression
     build:
       context: ./linear-regression
       dockerfile: Dockerfile    
     ports:
-    - "5000:5000"
+      - "5000:5000"
+    networks:
+      - tfm-net
     restart: always
 
   logistic-regression:
@@ -53,7 +70,9 @@ services:
       context: ./logistic-regression
       dockerfile: Dockerfile    
     ports:
-    - "5001:5001"
+      - "5001:5001"
+    networks:
+      - tfm-net
     restart: always
 
   random-forest:
@@ -62,5 +81,16 @@ services:
       context: ./random-forest
       dockerfile: Dockerfile    
     ports:
-    - "5002:5002"
+      - "5002:5002"
+    networks:
+      - tfm-net
     restart: always
+
+networks:
+  tfm-net:
+
+volumes:
+  keycloak_data:
+  vault_data:
+  phpmyadmin_data:
+  db_data:
