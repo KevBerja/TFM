@@ -1,6 +1,6 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
-# Instalacion de dependencias
+# Instalación de dependencias
 RUN apt-get update && apt-get install -y curl openjdk-11-jre-headless unzip && \
     rm -rf /var/lib/apt/lists/*
 
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y wget && \
     apt-get purge -y wget && apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Configuracion variables de entorno para Vault y Keycloak
+# Configuración de variables de entorno para Vault y Keycloak
 ENV VAULT_DEV_ROOT_TOKEN_ID=root \
     VAULT_ADDR=http://0.0.0.0:8200 \
     VAULT_API_ADDR=http://0.0.0.0:8200 \
@@ -20,7 +20,7 @@ ENV VAULT_DEV_ROOT_TOKEN_ID=root \
     KEYCLOAK_ADMIN_PASSWORD=admin \
     KEYCLOAK_URL=http://0.0.0.0:8080/auth
 
-# Descarga e instalacion de Keycloak y Vault
+# Descarga e instalación de Keycloak y Vault
 WORKDIR /opt
 RUN curl -L https://github.com/keycloak/keycloak/releases/download/19.0.3/keycloak-19.0.3.tar.gz | tar zx && \
     mv keycloak-19.0.3 keycloak
@@ -33,19 +33,16 @@ COPY init-keycloak.sh /init-keycloak.sh
 
 RUN chmod +x /init-keycloak.sh
 
-# Creacion scripts inicio Keycloak y Vault
+# Creación de script de inicio para Keycloak y Vault
 RUN echo '#!/bin/bash\n\
-nohup /usr/local/bin/vault server -dev &\n\
+/usr/local/bin/vault server -dev &\n\
 /opt/keycloak/bin/kc.sh start-dev &\n\
+sleep 10\n\
+/init-keycloak.sh\n\
+tail -f /dev/null\n\
 ' > /start.sh && chmod +x /start.sh
 
-# Inicializacion Keycloak y Vault
-RUN /start.sh
-
-# API configuracion Keycloak
-RUN /init-keycloak.sh
-
-# Volumenes para Keycloak y Vault
+# Volúmenes para Keycloak y Vault
 # VOLUME ["/opt/keycloak/data", "/vault/file"]
 
 # Puertos de Keycloak y Vault

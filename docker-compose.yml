@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   auth-service:
     container_name: auth-service
@@ -14,7 +12,7 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - vault_data:/vault/data
-    restart: always
+    restart: on-failure
 
   app-home:
     container_name: app-home
@@ -25,7 +23,7 @@ services:
       - "8088:80"
     networks:
       - tfm-net
-    restart: always
+    restart: on-failure
 
   phpmyadmin:
     container_name: phpmyadmin
@@ -38,7 +36,7 @@ services:
       - tfm-net
     volumes:
       - phpmyadmin_data:/etc/phpmyadmin
-    restart: always
+    restart: on-failure
 
   db:
     container_name: mysql
@@ -51,7 +49,7 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - tfm-net
-    restart: always
+    restart: on-failure
   
   linear-regression:
     container_name: linear-regression
@@ -62,7 +60,7 @@ services:
       - "5000:5000"
     networks:
       - tfm-net
-    restart: always
+    restart: on-failure
 
   logistic-regression:
     container_name: logistic-regression
@@ -73,7 +71,7 @@ services:
       - "5001:5001"
     networks:
       - tfm-net
-    restart: always
+    restart: on-failure
 
   random-forest:
     container_name: random-forest
@@ -84,10 +82,11 @@ services:
       - "5002:5002"
     networks:
       - tfm-net
-    restart: always
+    restart: on-failure
 
 networks:
   tfm-net:
+    driver: bridge
 
 volumes:
   keycloak_data:
