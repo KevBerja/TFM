@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-
+from flask_oidc import OpenIDConnect
 
 app = Flask(__name__)
 app.secret_key = 'kcv239LinearRegression'

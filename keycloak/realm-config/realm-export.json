@@ -1,0 +1,29 @@
+{
+    "realm": "tfm",
+    "enabled": true,
+    "clients": [
+      {
+        "clientId": "vault",
+        "enabled": true,
+        "protocol": "openid-connect",
+        "secret": "vault-client-secret",
+        "publicClient": false,
+        "redirectUris": ["http://vault:8200/*"],
+        "webOrigins": ["*"],
+        "standardFlowEnabled": true,
+        "serviceAccountsEnabled": true
+      }
+    ],
+    "users": [
+      {
+        "username": "kcv239",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "inlumine.ual.es"
+          }
+        ]
+      }
+    ]
+  }
