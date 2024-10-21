@@ -31,7 +31,9 @@ services:
       VAULT_DEV_ROOT_TOKEN_ID: root
     cap_add:
       - IPC_LOCK
-    command: server -dev -dev-listen-address=0.0.0.0:8200
+    volumes:
+      - ./vault/config/init-vault.sh:/init-vault.sh
+    command: ["/bin/sh", "/init-vault.sh"]
     restart: on-failure
 
   app-home:

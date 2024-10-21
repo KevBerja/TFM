@@ -24,7 +24,7 @@ resource "vault_generic_endpoint" "oidc_config" {
   path = "auth/${vault_auth_backend.oidc.path}/config"
 
   data_json = jsonencode({
-    oidc_discovery_url = "http://keycloak:8080/realms/tfm",
+    oidc_discovery_url = "http://localhost:8080/realms/tfm",
     oidc_client_id     = "vault",
     oidc_client_secret = "vault-client-secret",
     default_role       = "default"
@@ -36,10 +36,7 @@ resource "vault_generic_endpoint" "oidc_role" {
   path = "auth/${vault_auth_backend.oidc.path}/role/default"
 
   data_json = jsonencode({
-    allowed_redirect_uris = [
-      "http://vault:8200/ui/vault/auth/oidc/oidc/callback",
-      "http://localhost:8200/ui/vault/auth/oidc/oidc/callback"
-    ],
+    allowed_redirect_uris = ["http://vault:8200/ui/vault/auth/oidc/oidc/callback", "http://localhost:8200/ui/vault/auth/oidc/oidc/callback"],
     user_claim = "sub",
     policies   = ["default"],
     ttl        = "1h"
@@ -51,8 +48,24 @@ resource "vault_policy" "default" {
   name = "default"
 
   policy = <<EOF
-    path "secret/*" {
-      capabilities = ["read"]
-    }
-    EOF
+# Permitir acceso al método de autenticación OIDC
+path "auth/oidc/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# Permitir acceso para interactuar con tokens de autenticación
+path "auth/token/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# Permitir acceso a los caminos de autenticación y configuración del sistema
+path "sys/auth/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# Permitir acceso a los secretos con capacidad de escritura y lectura
+path "secret/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+EOF
 }
