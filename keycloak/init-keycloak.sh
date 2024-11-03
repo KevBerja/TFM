@@ -1,44 +1,5 @@
 #!/bin/bash
 
-# Obtener IP de Vault
-VAULT_IP=$(getent hosts vault | awk '{ print $1 }')
-echo "Dirección IP de Vault: $VAULT_IP"
-
-# Actualizar fichero /etc/hosts
-if [ -n "$VAULT_IP" ]; then
-  if grep -q 'vault' /etc/hosts; then
-    sed -i '/ vault/d' /etc/hosts
-    echo "Entrada de Vault eliminada de /etc/hosts."
-  else
-    echo "No se encontró ninguna entrada de Vault en /etc/hosts."
-  fi
-
-  echo "$VAULT_IP vault" >> /etc/hosts
-  echo "Se actualizó la IP de Vault ($VAULT_IP) en el archivo /etc/hosts de Keycloak."
-else
-  echo "No se pudo obtener la IP de Vault."
-fi
-
-
-# Obtener IP de Postgres
-POSTGRES_IP=$(getent hosts keycloak-db | awk '{ print $1 }')
-echo "Dirección IP de Postgres: $POSTGRES_IP"
-
-# Actualizar fichero /etc/hosts
-if [ -n "$POSTGRES_IP" ]; then
-  if grep -q 'keycloak-db' /etc/hosts; then
-    sed -i '/ keycloak-db/d' /etc/hosts
-    echo "Entrada de Postgres eliminada de /etc/hosts."
-  else
-    echo "No se encontró ninguna entrada de Postgres en /etc/hosts."
-  fi
-
-  echo "$PPSTGRES_IP keycloak-db" >> /etc/hosts
-  echo "Se actualizó la IP de Postgres ($POSTGRES_IP) en el archivo /etc/hosts de Keycloak."
-else
-  echo "No se pudo obtener la IP de Postgres."
-fi
-
 # Crear el directorio de proveedores si no existe
 mkdir -p /opt/keycloak/providers
 
@@ -66,4 +27,4 @@ else
 fi
 
 # Iniciar Keycloak
-exec /opt/keycloak/bin/kc.sh start --import-realm --http-enabled=true --hostname-strict=false
+exec /opt/keycloak/bin/kc.sh start-dev --import-realm

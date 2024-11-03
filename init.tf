@@ -8,8 +8,8 @@ terraform {
 }
 
 provider "vault" {
-  address = "http://localhost:8200"
-  token = trimspace(file("${path.module}/vault/creds/root_token"))
+  address = "http://vault:8200"
+  token = "root"
 }
 
 # Habilitar el metodo de autenticación OIDC
@@ -26,28 +26,24 @@ resource "vault_generic_endpoint" "oidc_config" {
   data_json = jsonencode({
     oidc_discovery_url = "http://keycloak:8080/realms/tfm",
     oidc_client_id     = "vault",
-    oidc_client_secret = "vault-client-secret",
+    oidc_client_secret = "inlumine.ual.es",
     default_role       = "default"
-    oidc_authorization_url = "http://keycloak:8080/realms/tfm/protocol/openid-connect/auth"
-    oidc_token_url         = "http://keycloak:8080/realms/tfm/protocol/openid-connect/token"
   })
-  depends_on = [vault_auth_backend.oidc]
 }
 
 # Definicion del rol para OIDC
 resource "vault_generic_endpoint" "oidc_role" {
   path = "auth/${vault_auth_backend.oidc.path}/role/default"
   data_json               = jsonencode({
-    bound_audiences       = "vault"
     allowed_redirect_uris = [
-    "http://vault:8200/ui/vault/auth/oidc/callback", 
-    "http://vault:8200/ui/vault/auth/oidc/oidc/callback"
-    ]
-    user_claim            = "sub"
-    policies              = ["default"]
+      "http://localhost:8200/ui/vault/auth/oidc/oidc/callback",
+      "http://localhost:8250/ui/vault/auth/oidc/callback",
+    ],
+    user_claim            = "sub",
+    bound_issuer          = "http://keycloak:8080/auth/realms/tfm",
+    policies              = ["default"],
     ttl                   = "1h"
   })
-  depends_on = [vault_auth_backend.oidc]
 }
 
 # Definir la política

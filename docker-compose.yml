@@ -4,16 +4,16 @@ services:
     image: quay.io/keycloak/keycloak:19.0.3
     container_name: keycloak
     hostname: keycloak
-    user: "root"
+    user: root
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: kcv239
+      KEYCLOAK_ADMIN_PASSWORD: inlumine.ual.es
       KC_DB: postgres
       KC_DB_URL_HOST: keycloak-db
       KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: kcv239
       KC_DB_PASSWORD: inlumine.ual.es
-      KC_HOSTNAME: keycloak
     ports:
       - "8080:8080"
       - "8443:8443"
@@ -27,7 +27,6 @@ services:
     entrypoint: ["/bin/sh", "/keycloak/init-scripts/init-keycloak.sh"]
     depends_on:
       - keycloak-db
-      - vault
     restart: on-failure
 
   keycloak-db:
@@ -50,7 +49,9 @@ services:
     image: vault:1.13.1
     container_name: vault
     hostname: vault
-    user: "root"
+    user: root
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: root
     ports:
       - "8200:8200"
     networks:
@@ -58,12 +59,8 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./vault/config:/vault/config
-      - vault_file:/vault/file
-      - vault_logs:/vault/logs
-      - vault_creds:/vault/creds
-      - ./vault/init-vault.sh:/vault/init-vault.sh
-    command: ["/bin/sh", "/vault/init-vault.sh"]
+      - vault_data:/vault/file
+    command: server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200
     restart: on-failure
 
   app-home:
@@ -150,8 +147,6 @@ networks:
 volumes:
   keycloak_data:
   keycloak_db_data:
-  vault_file:
-  vault_logs:
-  vault_creds:
+  vault_data:
   phpmyadmin_data:
   mysql_data:

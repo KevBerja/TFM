@@ -1,5 +1,5 @@
 storage "file" {
-  path = "/vault/data"
+  path = "/vault/file"
 }
 
 listener "tcp" {
@@ -9,7 +9,7 @@ listener "tcp" {
 
 plugin_directory = "/vault/plugins"
 
-api_addr = "http://localhost:8200"
+api_addr = "http://0.0.0.0:8200"
 ui = true
 
 disable_mlock = true

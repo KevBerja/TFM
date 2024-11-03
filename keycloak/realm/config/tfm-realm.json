@@ -6,9 +6,9 @@
         "clientId": "vault",
         "enabled": true,
         "protocol": "openid-connect",
-        "secret": "vault-client-secret",
+        "secret": "inlumine.ual.es",
         "publicClient": false,
-        "redirectUris": ["http://vault:8200/*", "http://vault:8250/*"],
+        "redirectUris": ["http://vault:8200/*", "http://localhost:8200/*", "http://vault:8250/*", "http://localhost:8250/*"],
         "webOrigins": ["*"],
         "standardFlowEnabled": true,
         "serviceAccountsEnabled": true
