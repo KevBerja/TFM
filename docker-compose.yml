@@ -20,10 +20,10 @@ services:
     networks:
       - tfm-net
     volumes:
-      - keycloak_data:/opt/keycloak/data
-      - ./keycloak/realm/config:/opt/keycloak/data/import
+      - ./keycloak/volume/data:/opt/keycloak/data
+      - ./keycloak/realm/config:/opt/keycloak/realm/config
       - ./keycloak/init-keycloak.sh:/keycloak/init-scripts/init-keycloak.sh
-      - ./keycloak/providers:/opt/keycloak/providers
+      - ./keycloak/volume/providers:/opt/keycloak/providers
     entrypoint: ["/bin/sh", "/keycloak/init-scripts/init-keycloak.sh"]
     depends_on:
       - keycloak-db
@@ -38,29 +38,42 @@ services:
       POSTGRES_USER: kcv239
       POSTGRES_PASSWORD: inlumine.ual.es
     volumes:
-      - keycloak_db_data:/var/lib/postgresql/data
+      - ./db/volume/postgresql/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - tfm-net
     restart: on-failure
-
+  
   vault:
     image: vault:1.13.1
     container_name: vault
     hostname: vault
-    user: root
-    environment:
-      VAULT_DEV_ROOT_TOKEN_ID: root
     ports:
       - "8200:8200"
-    networks:
-      - tfm-net
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/volume/data:/vault/data
+      - ./vault/volume/file:/vault/file
+      - ./vault/volume/logs:/vault/logs
+    command: ["sh", "-c", "vault server -config=/vault/config/config.hcl"]
     cap_add:
       - IPC_LOCK
+    networks:
+      - tfm-net
+    restart: on-failure
+
+  vault-init:
+    image: vault:1.13.1
+    container_name: vault-init
+    depends_on:
+      - vault
     volumes:
-      - vault_data:/vault/file
-    command: server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200
+      - ./vault/init-vault.sh:/init-vault.sh
+      - ./vault/volume/data:/vault/data
+    networks:
+      - tfm-net
+    entrypoint: ["sh", "-c", "apk add --no-cache curl jq && sh /init-vault.sh"]
     restart: on-failure
 
   app-home:
@@ -86,7 +99,7 @@ services:
     networks:
       - tfm-net
     volumes:
-      - phpmyadmin_data:/etc/phpmyadmin
+      - ./db/volume/phpmyadmin:/etc/phpmyadmin
     restart: on-failure
 
   mysql:
@@ -98,8 +111,8 @@ services:
     ports:
       - "3366:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/volume/mysql:/var/lib/mysql
+      - ./db/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - tfm-net
     restart: on-failure
@@ -143,10 +156,3 @@ services:
 networks:
   tfm-net:
     driver: bridge
-
-volumes:
-  keycloak_data:
-  keycloak_db_data:
-  vault_data:
-  phpmyadmin_data:
-  mysql_data:
