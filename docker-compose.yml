@@ -54,7 +54,6 @@ services:
     volumes:
       - ./vault/config:/vault/config
       - ./vault/volume/data:/vault/data
-      - ./vault/volume/file:/vault/file
       - ./vault/volume/logs:/vault/logs
     command: ["sh", "-c", "vault server -config=/vault/config/config.hcl"]
     cap_add:

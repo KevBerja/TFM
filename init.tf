@@ -9,7 +9,7 @@ terraform {
 
 provider "vault" {
   address = "http://vault:8200"
-  token = "root"
+  token = jsondecode(file("${path.module}/vault/volume/data/keys.json")).root_token
 }
 
 # Habilitar el metodo de autenticación OIDC
@@ -38,6 +38,8 @@ resource "vault_generic_endpoint" "oidc_role" {
     allowed_redirect_uris = [
       "http://localhost:8200/ui/vault/auth/oidc/oidc/callback",
       "http://localhost:8250/ui/vault/auth/oidc/callback",
+      "http://vault:8200/ui/vault/auth/oidc/oidc/callback",
+      "http://vault:8250/ui/vault/auth/oidc/callback"
     ],
     user_claim            = "sub",
     bound_issuer          = "http://keycloak:8080/auth/realms/tfm",
