@@ -1,1 +1,4 @@
 **/volume/
+.terraform/
+*.tfstate*
+.terraform.lock.hcl

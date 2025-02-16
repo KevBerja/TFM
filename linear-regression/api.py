@@ -17,11 +17,33 @@ from flask_oidc import OpenIDConnect
 app = Flask(__name__)
 app.secret_key = 'kcv239LinearRegression'
 
+# Configuración de OIDC
+app.config.update({
+    'OIDC_CLIENT_SECRETS': './client_secrets.json',
+    #'OIDC_RESOURCE_CHECK_AUD': False,
+    'OIDC_ID_TOKEN_COOKIE_SECURE': False,
+    'OIDC_SCOPES': ['openid'],
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post'
+})
+
+oidc = OpenIDConnect(app)
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # Verificamos si el usuario está logueado
+    if oidc.user_loggedin:
+        # El usuario puede ver la home normalmente
+        return render_template('index.html')
+    else:
+        # Redirigimos a la ruta de login (que forzará la autenticación OIDC)
+        return redirect('http://vault:8200')
 
+@app.route('/logout')
+def logout():
+    # Cierra la sesión local
+    oidc.logout()
+    # Opcional: Redirigir al logout de Keycloak
+    return 'Sesión cerrada. <a href="/">Volver al inicio</a>'
 
 @app.route('/loadInitCSV', methods=['GET'])
 def upload_file():
