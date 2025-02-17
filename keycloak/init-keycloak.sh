@@ -26,5 +26,11 @@ else
   chmod a+r "${JDBC_DRIVER_PATH}"
 fi
 
+echo "Esperando a que Postgresql esté disponible en el puerto 5432..."
+while ! (echo > /dev/tcp/keycloak-db/5432) 2>/dev/null; do
+  sleep 1
+done
+echo "Postgresql está listo. Iniciando Keycloak..."
+
 # Iniciar Keycloak
 exec /opt/keycloak/bin/kc.sh start-dev --import-realm

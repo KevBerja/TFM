@@ -36,7 +36,7 @@ def home():
         return render_template('index.html')
     else:
         # Redirigimos a la ruta de login (que forzará la autenticación OIDC)
-        return redirect('http://vault:8200')
+        return redirect('http://keycloak:8080')
 
 @app.route('/logout')
 def logout():
