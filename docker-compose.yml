@@ -21,7 +21,7 @@ services:
       - tfm-net
     volumes:
       - ./keycloak/volume/data:/opt/keycloak/data
-      - ./keycloak/realm/config:/opt/keycloak/data/import
+      # - ./keycloak/realm/config:/opt/keycloak/data/import
       - ./keycloak/init-keycloak.sh:/keycloak/init-scripts/init-keycloak.sh
       - ./keycloak/volume/providers:/opt/keycloak/providers
     entrypoint: ["/bin/sh", "/keycloak/init-scripts/init-keycloak.sh"]

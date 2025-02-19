@@ -1,5 +1,9 @@
 terraform {
   required_providers {
+    keycloak = {
+      source  = "mrparkers/keycloak"
+      version = ">= 3.6.0"
+    }
     vault = {
       source  = "hashicorp/vault"
       version = ">= 3.14.0"
@@ -7,9 +11,68 @@ terraform {
   }
 }
 
+provider "keycloak" {
+  # Configura el endpoint de Keycloak y las credenciales de administración.
+  url       = "http://keycloak:8080"
+  client_id = "admin-cli"
+  username  = "admin"
+  password  = "admin"
+  realm     = "master"
+}
+
 provider "vault" {
   address = "http://vault:8200"
   token = jsondecode(file("${path.module}/vault/volume/data/keys.json")).root_token
+}
+
+# Crear el realm "tfm"
+resource "keycloak_realm" "tfm" {
+  realm   = "tfm"
+  enabled = true
+}
+
+# Cliente "vault" (CONFIDENTIAL)
+resource "keycloak_openid_client" "vault" {
+  realm_id                 = keycloak_realm.tfm.id
+  client_id                = "vault"
+  name                     = "vault"
+  enabled                  = true
+  standard_flow_enabled    = true
+  access_type              = "CONFIDENTIAL"             # Cliente confidencial
+  service_accounts_enabled = true
+  client_secret                   = "inlumine.ual.es"
+  valid_redirect_uris      = [
+    "http://vault:8200/*",
+    "http://localhost:8200/*",
+    "http://vault:8250/*",
+    "http://localhost:8250/*"
+  ]
+  web_origins = ["*"]
+}
+
+# Cliente "tfg" (PUBLIC)
+resource "keycloak_openid_client" "tfg" {
+  realm_id                 = keycloak_realm.tfm.id
+  client_id                = "tfg"
+  name                     = "tfg"
+  enabled                  = true
+  standard_flow_enabled    = true
+  access_type              = "PUBLIC"                 # Cliente público
+  service_accounts_enabled = false
+  valid_redirect_uris      = ["http://localhost:5000/*"]
+  web_origins              = ["*"]
+}
+
+# Crear el usuario "kcv239"
+resource "keycloak_user" "kcv239" {
+  realm_id = keycloak_realm.tfm.id
+  username = "kcv239"
+  enabled  = true
+
+  initial_password {
+    temporary = false
+    value     = "inlumine.ual.es"
+  }
 }
 
 # Habilitar el metodo de autenticación OIDC
@@ -21,6 +84,7 @@ resource "vault_auth_backend" "oidc" {
 
 # Configuracion OIDC usando vault_generic_endpoint
 resource "vault_generic_endpoint" "oidc_config" {
+  depends_on   = [ keycloak_realm.tfm ]
   path = "auth/${vault_auth_backend.oidc.path}/config"
   disable_read = true
   data_json = jsonencode({
