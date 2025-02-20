@@ -17,7 +17,7 @@ from flask_oidc import OpenIDConnect
 app = Flask(__name__)
 app.secret_key = 'kcv239LinearRegression'
 
-# Configuración de OIDC
+# Configuracion de OIDC
 app.config.update({
     'OIDC_CLIENT_SECRETS': './client_secrets.json',
     #'OIDC_RESOURCE_CHECK_AUD': False,
@@ -29,22 +29,23 @@ app.config.update({
 oidc = OpenIDConnect(app)
 
 @app.route('/')
+@oidc.require_login
 def home():
-    # Verificamos si el usuario está logueado
-    if oidc.user_loggedin:
-        # El usuario puede ver la home normalmente
-        return render_template('index.html')
-    else:
-        # Redirigimos a la ruta de login (que forzará la autenticación OIDC)
-        return redirect('http://keycloak:8080')
+    return render_template('index.html')
+
+@app.route('/login')
+@oidc.require_login
+def login():
+    # Si se ha iniciado sesion redirige a la pagina de inicio de la app
+    return redirect(url_for('home'))
 
 @app.route('/logout')
 def logout():
-    # Cierra la sesión local
     oidc.logout()
-    # Opcional: Redirigir al logout de Keycloak
-    return 'Sesión cerrada. <a href="/">Volver al inicio</a>'
+    flash("Sesión cerrada")
+    return redirect(url_for('home'))
 
+@oidc.require_login
 @app.route('/loadInitCSV', methods=['GET'])
 def upload_file():
     return render_template('subida_fichero.html')
@@ -72,7 +73,7 @@ def uploader():
 
         return redirect('/loadInitCSV')
 
-
+@oidc.require_login
 @app.route('/loadModel', methods=['GET'])
 def loadModel():
     try:
@@ -127,7 +128,7 @@ def setModel():
             return redirect('/loadModel')
 
 
-
+@oidc.require_login
 @app.route('/deleteModel', methods=['GET', 'DELETE'])
 def wipe():
     try:
@@ -150,7 +151,7 @@ def wipe():
         
         return redirect('/')
 
-
+@oidc.require_login
 @app.route('/formTrain', methods=['GET'])
 def formTrain():
     return render_template('train.html')
@@ -276,7 +277,7 @@ def predict():
         else:
             return "ERROR - Se necesita primero subir el fichero de datos para entrenamiento y entrenar después al modelo"
 
-
+@oidc.require_login
 @app.route('/load_predict_form', methods=['GET'])
 def load_form():
     return render_template('formulario_predict.html')
@@ -308,7 +309,7 @@ def predict_form():
 
             return redirect('/load_predict_form')
 
-
+@oidc.require_login
 @app.route('/loadCSVToPredict', methods=['GET'])
 def uploadMassive():
     try:

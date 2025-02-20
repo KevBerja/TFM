@@ -17,11 +17,11 @@
         "clientId": "tfg",
         "enabled": true,
         "protocol": "openid-connect",
-        "publicClient": true,
+        "publicClient": false,
         "redirectUris": ["http://localhost:5000/*"],
         "webOrigins": ["*"],
         "standardFlowEnabled": true,
-        "serviceAccountsEnabled": false
+        "serviceAccountsEnabled": true
       }
     ],
     "users": [

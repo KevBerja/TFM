@@ -2,13 +2,13 @@
 
 export VAULT_ADDR='http://vault:8200'
 
-# Esperar a que Vault esté disponible
+# Esperar a que Vault este disponible
 until curl -s $VAULT_ADDR/v1/sys/health > /dev/null; do
   echo "Esperando a que Vault esté disponible..."
   sleep 1
 done
 
-# Verificar si Vault está inicializado
+# Verificar si Vault esta inicializado
 if [ "$(vault status -format=json | jq -r '.initialized')" = "false" ]; then
   echo "Inicializando Vault..."
   vault operator init -key-shares=1 -key-threshold=1 -format=json > /vault/data/keys.json

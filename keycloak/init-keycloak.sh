@@ -15,7 +15,7 @@ else
   echo "Descargando el controlador JDBC de PostgreSQL versión ${JDBC_DRIVER_VERSION}..."
   curl -L "https://jdbc.postgresql.org/download/${JDBC_DRIVER_FILE}" -o "${JDBC_DRIVER_PATH}"
 
-  # Verificar que el controlador se descargó correctamente
+  # Verificar que el controlador se ha descargado correctamente
   if [ -f "${JDBC_DRIVER_PATH}" ]; then
     echo "Controlador JDBC descargado exitosamente."
   else

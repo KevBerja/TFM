@@ -12,7 +12,6 @@ terraform {
 }
 
 provider "keycloak" {
-  # Configura el endpoint de Keycloak y las credenciales de administración.
   url       = "http://keycloak:8080"
   client_id = "admin-cli"
   username  = "admin"
@@ -25,22 +24,22 @@ provider "vault" {
   token = jsondecode(file("${path.module}/vault/volume/data/keys.json")).root_token
 }
 
-# Crear el realm "tfm"
+# Realm "tfm"
 resource "keycloak_realm" "tfm" {
   realm   = "tfm"
   enabled = true
 }
 
-# Cliente "vault" (CONFIDENTIAL)
+# Cliente "vault"
 resource "keycloak_openid_client" "vault" {
   realm_id                 = keycloak_realm.tfm.id
   client_id                = "vault"
   name                     = "vault"
   enabled                  = true
   standard_flow_enabled    = true
-  access_type              = "CONFIDENTIAL"             # Cliente confidencial
+  access_type              = "CONFIDENTIAL"
   service_accounts_enabled = true
-  client_secret                   = "inlumine.ual.es"
+  client_secret            = "inlumine.ual.es"
   valid_redirect_uris      = [
     "http://vault:8200/*",
     "http://localhost:8200/*",
@@ -50,16 +49,17 @@ resource "keycloak_openid_client" "vault" {
   web_origins = ["*"]
 }
 
-# Cliente "tfg" (PUBLIC)
+# Cliente "tfg"
 resource "keycloak_openid_client" "tfg" {
   realm_id                 = keycloak_realm.tfm.id
   client_id                = "tfg"
   name                     = "tfg"
   enabled                  = true
   standard_flow_enabled    = true
-  access_type              = "PUBLIC"                 # Cliente público
-  service_accounts_enabled = false
+  access_type              = "CONFIDENTIAL"
+  service_accounts_enabled = true
   valid_redirect_uris      = ["http://localhost:5000/*"]
+  client_secret            = "inlumine.ual.es"
   web_origins              = ["*"]
 }
 
@@ -95,7 +95,7 @@ resource "vault_generic_endpoint" "oidc_config" {
   })
 }
 
-# Definicion del rol para OIDC
+# Definicion del rol para OIDC vault
 resource "vault_generic_endpoint" "oidc_role" {
   path = "auth/${vault_auth_backend.oidc.path}/role/default"
   data_json               = jsonencode({
@@ -112,7 +112,7 @@ resource "vault_generic_endpoint" "oidc_role" {
   })
 }
 
-# Definir la política
+# Politica "default" vault
 resource "vault_policy" "default" {
   name = "default"
 
