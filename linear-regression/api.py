@@ -2,12 +2,13 @@ import sys
 import os
 import shutil
 import traceback as tr
+import requests as rq
 import numpy as np
 import pandas as pd
 import joblib as jb
 import mysql.connector
 
-from flask import Flask, request, jsonify, render_template, redirect, session, flash, send_file
+from flask import Flask, request, jsonify, render_template, url_for, redirect, session, flash, send_file
 from werkzeug.utils import secure_filename
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
@@ -32,6 +33,37 @@ oidc = OpenIDConnect(app)
 @oidc.require_login
 def home():
     return render_template('index.html')
+
+@app.route('/vault_login')
+@oidc.require_login
+def vault_login():
+    # Obtener el token OIDC Keycloak de acceso
+    access_token = oidc.get_access_token()
+
+    if not access_token:
+        flash("No se encontró el token OIDC.")
+        return redirect(url_for('home'))
+
+    # Enviar el token OIDC obtenido a Vault para el login OIDC
+    vault_url = "http://vault:8200/v1/auth/oidc/login"
+    payload = {
+        "id_token": access_token,
+        "role": "default"
+    }
+
+    try:
+        response = rq.post(vault_url, json=payload)
+        if response.status_code == 200:
+            vault_token = response.json()["auth"]["client_token"]
+            # Guardar el token de Vault en la sesion
+            session["vault_token"] = vault_token
+            flash("Autenticación en Vault completada con éxito.")
+        else:
+            flash(f"Fallo en la autenticación en Vault (HTTP {response.status_code}): {response.text}")
+    except Exception as e:
+        flash(f"Error al conectar con Vault: {str(e)}")
+
+    return redirect(url_for('home'))
 
 @app.route('/login')
 @oidc.require_login

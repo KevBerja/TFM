@@ -6,3 +6,4 @@ scikit-learn
 werkzeug
 mysql-connector
 flask_oidc
+requests
