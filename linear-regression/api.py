@@ -39,7 +39,6 @@ def home():
 def vault_login():
     # Obtener el token OIDC Keycloak de acceso
     access_token = oidc.get_access_token()
-    print(access_token)
 
     if not access_token:
         flash("No se encontró el token OIDC.")
@@ -54,7 +53,6 @@ def vault_login():
 
     try:
         response = rq.post(vault_url, json=payload)
-        print(response)
         if response.status_code == 200:
             vault_token = response.json()["auth"]["client_token"]
             # Guardar el token de Vault en la sesion

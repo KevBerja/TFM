@@ -30,7 +30,7 @@ services:
     restart: on-failure
 
   keycloak-db:
-    image: postgres:13
+    image: postgres:13.3
     container_name: keycloak-db
     hostname: keycloak-db
     environment:
@@ -46,7 +46,7 @@ services:
     restart: on-failure
   
   vault:
-    image: vault:1.13.1
+    image: vault:1.13.3
     container_name: vault
     hostname: vault
     ports:
@@ -63,7 +63,7 @@ services:
     restart: on-failure
 
   vault-init:
-    image: vault:1.13.1
+    image: vault:1.13.3
     container_name: vault-init
     depends_on:
       - vault
