@@ -42,9 +42,8 @@ resource "keycloak_openid_client" "vault" {
   client_secret            = "inlumine.ual.es"
   valid_redirect_uris      = [
     "http://vault:8200/*",
-    "http://localhost:8200/*",
     "http://vault:8250/*",
-    "http://localhost:8250/*"
+    "https://oauth.pstmn.io/v1/callback"
   ]
   web_origins = ["*"]
 }
@@ -101,13 +100,12 @@ resource "vault_generic_endpoint" "oidc_role" {
   data_json               = jsonencode({
     role_type             = "oidc",
     allowed_redirect_uris = [
-      "http://localhost:8200/ui/vault/auth/oidc/oidc/callback",
-      "http://localhost:8250/ui/vault/auth/oidc/callback",
       "http://vault:8200/ui/vault/auth/oidc/oidc/callback",
-      "http://vault:8250/ui/vault/auth/oidc/callback"
+      "http://vault:8250/ui/vault/auth/oidc/callback",
+      "https://oauth.pstmn.io/v1/callback"
     ],
     user_claim            = "sub",
-    bound_issuer          = "http://keycloak:8080/auth/realms/tfm",
+    bound_issuer          = "http://keycloak:8080/realms/tfm",
     policies              = ["default"],
     ttl                   = "1h"
   })

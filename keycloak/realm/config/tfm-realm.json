@@ -8,7 +8,7 @@
         "protocol": "openid-connect",
         "secret": "inlumine.ual.es",
         "publicClient": false,
-        "redirectUris": ["http://vault:8200/*", "http://localhost:8200/*", "http://vault:8250/*", "http://localhost:8250/*"],
+        "redirectUris": ["http://vault:8200/*", "http://vault:8250/*", "https://oauth.pstmn.io/v1/callback"],
         "webOrigins": ["*"],
         "standardFlowEnabled": true,
         "serviceAccountsEnabled": true
@@ -18,7 +18,7 @@
         "enabled": true,
         "protocol": "openid-connect",
         "publicClient": false,
-        "redirectUris": ["http://localhost:5000/*"],
+        "redirectUris": ["http://localhost:5000/*", "https://oauth.pstmn.io/v1/callback"],
         "webOrigins": ["*"],
         "standardFlowEnabled": true,
         "serviceAccountsEnabled": true
