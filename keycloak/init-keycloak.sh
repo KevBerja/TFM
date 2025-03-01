@@ -11,19 +11,10 @@ JDBC_DRIVER_PATH="/opt/keycloak/providers/${JDBC_DRIVER_FILE}"
 # Verificar si el controlador ya existe
 if [ -f "${JDBC_DRIVER_PATH}" ]; then
   echo "El controlador JDBC de PostgreSQL ya está presente en ${JDBC_DRIVER_PATH}."
-else
-  echo "Descargando el controlador JDBC de PostgreSQL versión ${JDBC_DRIVER_VERSION}..."
-  curl -L "https://jdbc.postgresql.org/download/${JDBC_DRIVER_FILE}" -o "${JDBC_DRIVER_PATH}"
-
-  # Verificar que el controlador se ha descargado correctamente
-  if [ -f "${JDBC_DRIVER_PATH}" ]; then
-    echo "Controlador JDBC descargado exitosamente."
-  else
-    echo "Error al descargar el controlador JDBC."
-    exit 1
-  fi
-
   chmod a+r "${JDBC_DRIVER_PATH}"
+else
+  echo "Error: No se ha cargado el controlador JDBC de PostgreSQL."
+  exit 1
 fi
 
 echo "Esperando a que Postgresql esté disponible en el puerto 5432..."
@@ -33,4 +24,4 @@ done
 echo "Postgresql está listo. Iniciando Keycloak..."
 
 # Iniciar Keycloak
-exec /opt/keycloak/bin/kc.sh start-dev --import-realm
+exec /opt/keycloak/bin/kc.sh start-dev
