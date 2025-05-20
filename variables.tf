@@ -42,7 +42,7 @@ variable "vault_address" {
 }
 
 variable "vault_token_file_path" {
-  description = "Ruta al archivo JSON que contiene el root_token de Vault"
+  description = "JSON file directory that contains the Vault root_token"
   default     = "vault/volume/data/keys.json"
   type        = string
 }
