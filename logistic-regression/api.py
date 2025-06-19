@@ -1,13 +1,20 @@
 import sys
+import logging
+import json
+import requests
+import jwt 
 import os
 import shutil
 import joblib as jb
 import traceback as tr
+import requests as rq
 import pandas as pd
 import numpy as np
 import mysql.connector
 
-from flask import Flask, request, jsonify, render_template, redirect, session, flash, send_file
+from flask import Flask, request, jsonify, render_template, url_for, redirect, session, flash, send_file
+from flask_session import Session
+from jwt import PyJWKClient
 from werkzeug.utils import secure_filename
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
@@ -17,13 +24,191 @@ from flask_oidc import OpenIDConnect
 app = Flask(__name__)
 app.secret_key = 'kcv239LogisticRegression'
 
+# Configuracion de OIDC
+app.config.update({
+    'OIDC_CLIENT_SECRETS': './client_secrets.json',
+    'OIDC_ID_TOKEN_COOKIE_SECURE': False,
+    'OIDC_SCOPES': ['openid'],
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post',
+    'SESSION_TYPE': 'filesystem',
+    'SESSION_FILE_DIR': '/tmp/flask_session',
+    'SESSION_PERMANENT': False
+})
+
+Session(app)
+
+with open(app.config['OIDC_CLIENT_SECRETS'], 'r') as f:
+    CLIENT_SECRETS = json.load(f)
+
+KEYCLOAK_URL = "http://keycloak:8080"
+REALM = "tfm"
+CLIENT_ID = CLIENT_SECRETS.get('web', CLIENT_SECRETS).get('client_id')
+JWKS_URL = f"{KEYCLOAK_URL}/realms/{REALM}/protocol/openid-connect/certs"
+jwk_client = PyJWKClient(JWKS_URL)
+
+oidc = OpenIDConnect(app)
+
+# Permisos
+REQUIRED_PERMISSIONS = {
+    'admin_dashboard':   ['admin'],
+    'upload_file':       ['default'],
+    'setModel':          ['default'],
+    'wipe':              ['default'],
+    'train':             ['default'],
+    'predict':           ['default'],
+    'predict_form':      ['default'],
+    'predictMassive':    ['default'],
+    'token_debug':       ['default']
+}
+
+PUBLIC_ENDPOINTS = ('static', 'favicon.ico', 'login', 'logout')
+
+@app.before_request
+def check_token_JWT():
+    # 1) Verificar si el endpoint es una ruta no protegida
+    if request.endpoint in PUBLIC_ENDPOINTS or request.endpoint or request.path.startswith('/authorize') is None:
+        return
+
+    # 2) Comprobar si hay en la cabecera un bearer token
+    auth_hdr = request.headers.get('Authorization', '').strip()
+    access_token = None
+    if auth_hdr:
+        auth_hdr_parts = auth_hdr.split()
+        access_token = auth_hdr_parts[-1] 
+
+        # 3) Decodificar y verificar JWT
+        try:
+            signing_key = jwk_client.get_signing_key_from_jwt(access_token).key
+            decoded = jwt.decode(
+                access_token,
+                signing_key,
+                algorithms=["RS256"],
+                audience=CLIENT_ID,
+                options={"verify_exp": True, "verify_aud": False}
+            )
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Unauthorized", "reason": "token_expired"}), 401
+        except Exception as e:
+            print("[DEBUG] Error al decodificar JWT:", e, flush=True)
+            return jsonify({"error": "Unauthorized", "reason": "invalid_token"}), 401
+
+        # 4) Extraer roles de realm_access y resource_access
+        roles = []
+        roles += decoded.get('realm_access', {}).get('roles', [])
+        for acceso in decoded.get('resource_access', {}).values():
+            roles += acceso.get('roles', [])
+        print(f"[DEBUG] Roles decodificados para '{request.endpoint}': {roles}", flush=True)
+
+    else:
+        if oidc.user_loggedin:
+            # Sesion valida
+            return
+        # No hay sesion se redirecciona login OIDC
+        return redirect(url_for('login', next=request.url))
+
+    # 5) Si no hay permisos previamente configurados para el endpoint denegar acceso
+    if request.method in ('GET', 'POST', 'DELETE', 'PUT') and request.endpoint not in REQUIRED_PERMISSIONS:
+        return jsonify({
+            "error":   "Forbidden",
+            "message": f"No hay permisos configurados para '{request.endpoint}'"
+        }), 403
+
+    # 6) Comprobar permisos configurados
+    permisos = REQUIRED_PERMISSIONS.get(request.endpoint, [])
+    if permisos and not any(r in roles for r in permisos):
+        return jsonify({
+            "error": "Forbidden",
+            "required_permissions": permisos
+        }), 403
+        
+    
+@app.route('/token_debug', methods=['GET', 'POST'])
+@oidc.require_login
+def token_debug():
+    debug_info = {
+        "info": "Info de debug"
+    }
+    
+    try:
+        # Obtener token de acceso del proveedor OIDC
+        access_token = oidc.get_access_token()
+        debug_info["Access_Token_OIDC_Provider_Get_Method"] = f"{access_token}" if access_token else "No disponible"
+        
+        # Obtener informacion del usuario
+        if hasattr(oidc, 'user_getinfo'):
+            user_info = oidc.user_getinfo(['email', 'sub', 'preferred_username'])
+            debug_info["user_info"] = user_info
+        
+        # Obtener detalles de la sesion OIDC
+        if hasattr(oidc, '_get_token_info'):
+            token_info = oidc._get_token_info()
+            if token_info:
+                debug_info["token_info"] = {k: v for k, v in token_info.items() if k != 'access_token'}
+                if 'access_token' in token_info:
+                    debug_info["Access_Token_Session_Get_Method"] = f"{token_info['access_token']}"
+        
+        # Obtener token de sesion Flask
+        if 'oidc_id_token' in session:
+            debug_info["id_token_in_session"] = True
+        
+        return jsonify(debug_info)
+    
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "trace": tr.format_exc()})
+    
+@app.route('/vault_login')
+@oidc.require_login
+def vault_login():
+     # 1. Obtener el token de acceso de Keycloak (OIDC)
+    access_token = oidc.get_access_token()
+    if not access_token:
+        flash("No se encontró el token OIDC.")
+        return redirect(url_for('home'))
+
+    # 2. Intercambiar el token OIDC por un token de Vault a través del endpoint JWT
+    vault_url = "http://vault:8200/v1/auth/jwt/login"
+    payload = {
+        "jwt": access_token,
+        "role": "default"
+    }
+
+    try:
+        response = rq.post(vault_url, json=payload)
+        if response.status_code == 200:
+            vault_data = response.json()
+            if "auth" in vault_data and "client_token" in vault_data["auth"]:
+                vault_token = vault_data["auth"]["client_token"]
+                # Guardar el token de Vault en la sesión
+                session["vault_token"] = vault_token
+                flash("Autenticación en Vault (JWT) completada con éxito.")
+            else:
+                flash(f"Formato de respuesta de Vault inesperado: {vault_data}")
+        else:
+            flash(f"Fallo en la autenticación en Vault (HTTP {response.status_code}): {response.text}")
+    except Exception as e:
+        flash(f"Error al conectar con Vault: {str(e)}")
+
+    return redirect(url_for('home'))
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    next_url = request.args.get('next') or url_for('home')
+    return oidc.redirect_to_auth_server(next_url)
+
+@app.route('/logout')
+def logout():
+    oidc.logout()
+    flash("Sesión cerrada")
+    return redirect(url_for('home'))
 
 @app.route('/loadInitCSV', methods=['GET'])
+@oidc.require_login
 def upload_file():
     return render_template('subida_fichero.html')
 
@@ -52,6 +237,7 @@ def uploader():
 
 
 @app.route('/loadModel', methods=['GET'])
+@oidc.require_login
 def loadModel():
     try:
         mydb = mysql.connector.connect(
@@ -107,6 +293,7 @@ def setModel():
 
 
 @app.route('/deleteModel', methods=['GET', 'DELETE'])
+@oidc.require_login
 def wipe():
     try:
         folder_path = './static/model_temp' 
@@ -130,6 +317,7 @@ def wipe():
 
 
 @app.route('/formTrain', methods=['GET'])
+@oidc.require_login
 def formTrain():
     return render_template('train.html')
 
@@ -266,6 +454,7 @@ def predict():
 
 
 @app.route('/load_predict_form', methods=['GET'])
+@oidc.require_login
 def load_form():
     try:
         df = pd.read_csv('./static/model_temp/train.csv', encoding='latin-1')
@@ -346,6 +535,7 @@ def predict_form():
 
 
 @app.route('/loadCSVToPredict', methods=['GET'])
+@oidc.require_login
 def uploadMassive():
     try:
         df = pd.read_csv('./static/model_temp/train.csv', encoding='latin-1')

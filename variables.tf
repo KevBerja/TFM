@@ -57,6 +57,15 @@ variable "keycloak_realm_enabled" {
   type        = bool
 }
 
+variable "keycloak_default_role_name" {
+  description = "Default role name for the realm"
+  type        = string
+}
+variable "keycloak_default_role_description" {
+  description = "Default role description for realm"
+  type        = string
+}
+
 variable "vault_client_id" {
   description = "Client ID for Vault"
   type        = string
@@ -95,6 +104,11 @@ variable "vault_valid_redirect_uris" {
 variable "vault_web_origins" {
   description = "Web origins for Vault"
   type        = list(string)
+}
+
+variable "vault_direct_access_grants_enabled" {
+  description = "Direct Access Grants for Vault"
+  type        = bool
 }
 
 variable "tfg_client_id" {
@@ -137,6 +151,11 @@ variable "tfg_web_origins" {
   type        = list(string)
 }
 
+variable "tfg_direct_access_grants_enabled" {
+  description = "Direct Access Grants for TFG"
+  type        = bool
+}
+
 variable "kcv239_username" {
   description = "Username for kcv239"
   type        = string
@@ -156,6 +175,26 @@ variable "kcv239_password_value" {
   description = "Initial password value for kcv239"
   type        = string
   sensitive   = true
+}
+
+variable "kcv239_email" {
+  description = "Email for kcv239"
+  type        = string
+}
+
+variable "kcv239_email_verified" {
+  description = "Whether the email for kcv239 is verified"
+  type        = bool
+}
+
+variable "kcv239_first_name" {
+  description = "First name for kcv239"
+  type        = string
+}
+
+variable "kcv239_last_name" {
+  description = "Last name for kcv239"
+  type        = string
 }
 
 variable "oidc_auth_type" {

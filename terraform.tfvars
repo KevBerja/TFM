@@ -1,43 +1,53 @@
-keycloak_url           = "http://keycloak:8080"
-keycloak_client_id     = "admin-cli"
-keycloak_username      = "admin"
-keycloak_password      = "admin"
-keycloak_realm         = "master"
-vault_address          = "http://vault:8200"
-vault_client_secret    = "inlumine.ual.es"
-tfg_client_secret      = "inlumine.ual.es"
-keycloak_realm_name    = "tfm"
-keycloak_realm_enabled = true
+keycloak_url                       = "http://keycloak:8080"
+keycloak_client_id                 = "admin-cli"
+keycloak_username                  = "admin"
+keycloak_password                  = "admin"
+keycloak_realm                     = "master"
+vault_address                      = "http://vault:8200"
+vault_client_secret                = "inlumine.ual.es"
+tfg_client_secret                  = "inlumine.ual.es"
+keycloak_realm_name                = "tfm"
+keycloak_realm_enabled             = true
+keycloak_default_role_name         = "default"
+keycloak_default_role_description  = "role_tfm-default"
 
-vault_client_id                = "vault"
-vault_client_name              = "vault"
-vault_client_enabled           = true
-vault_standard_flow_enabled    = true
-vault_access_type              = "CONFIDENTIAL"
-vault_service_accounts_enabled = true
+vault_client_id                     = "vault"
+vault_client_name                   = "vault"
+vault_client_enabled                = true
+vault_standard_flow_enabled         = true
+vault_direct_access_grants_enabled  = true
+vault_access_type                   = "CONFIDENTIAL"
+vault_service_accounts_enabled      = true
 vault_valid_redirect_uris = [
   "http://vault:8200/*",
   "http://localhost:8200/*",
   "http://vault:8250/*",
   "http://localhost:8250/*",
-  "https://oauth.pstmn.io/v1/callback"
+  "https://oauth.pstmn.io/*"
 ]
 vault_web_origins = ["*"]
 
-tfg_client_id                = "tfg"
-tfg_client_name              = "tfg"
-tfg_client_enabled           = true
-tfg_standard_flow_enabled    = true
-tfg_access_type              = "CONFIDENTIAL"
-tfg_service_accounts_enabled = true
+
+tfg_client_id                     = "tfg"
+tfg_client_name                   = "tfg"
+tfg_client_enabled                = true
+tfg_standard_flow_enabled         = true
+tfg_direct_access_grants_enabled  = true
+tfg_access_type                   = "CONFIDENTIAL"
+tfg_service_accounts_enabled      = true
 tfg_valid_redirect_uris = [
   "http://localhost:5000/*",
   "http://localhost:5001/*",
-  "http://localhost:5002/*"
+  "http://localhost:5002/*",
+  "https://oauth.pstmn.io/*"
 ]
 tfg_web_origins = ["*"]
 
 kcv239_username           = "kcv239"
+kcv239_email              = "kcv239@inlumine.ual.es"
+kcv239_email_verified     = true
+kcv239_first_name         = "Kevin"
+kcv239_last_name          = "Carracedo Vázquez"
 kcv239_enabled            = true
 kcv239_temporary_password = false
 kcv239_password_value     = "inlumine.ual.es"

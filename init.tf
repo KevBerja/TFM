@@ -30,32 +30,41 @@ resource "keycloak_realm" "tfm" {
   enabled = var.keycloak_realm_enabled
 }
 
+# Crear rol "default" para el realm "tfm"
+resource "keycloak_role" "default_role" {
+  realm_id    = keycloak_realm.tfm.id
+  name        = var.keycloak_default_role_name
+  description = var.keycloak_default_role_description
+}
+
 # Cliente "vault"
 resource "keycloak_openid_client" "vault" {
-  realm_id                 = keycloak_realm.tfm.id
-  client_id                = var.vault_client_id
-  name                     = var.vault_client_name
-  enabled                  = var.vault_client_enabled
-  standard_flow_enabled    = var.vault_standard_flow_enabled
-  access_type              = var.vault_access_type
-  service_accounts_enabled = var.vault_service_accounts_enabled
-  client_secret            = var.vault_client_secret
-  valid_redirect_uris      = var.vault_valid_redirect_uris
-  web_origins              = var.vault_web_origins
+  realm_id                      = keycloak_realm.tfm.id
+  client_id                     = var.vault_client_id
+  name                          = var.vault_client_name
+  enabled                       = var.vault_client_enabled
+  standard_flow_enabled         = var.vault_standard_flow_enabled
+  direct_access_grants_enabled  = var.vault_direct_access_grants_enabled
+  access_type                   = var.vault_access_type
+  service_accounts_enabled      = var.vault_service_accounts_enabled
+  client_secret                 = var.vault_client_secret
+  valid_redirect_uris           = var.vault_valid_redirect_uris
+  web_origins                   = var.vault_web_origins
 }
 
 # Cliente "tfg"
 resource "keycloak_openid_client" "tfg" {
-  realm_id                 = keycloak_realm.tfm.id
-  client_id                = var.tfg_client_id
-  name                     = var.tfg_client_name
-  enabled                  = var.tfg_client_enabled
-  standard_flow_enabled    = var.tfg_standard_flow_enabled
-  access_type              = var.tfg_access_type
-  service_accounts_enabled = var.tfg_service_accounts_enabled
-  valid_redirect_uris      = var.tfg_valid_redirect_uris
-  client_secret            = var.tfg_client_secret
-  web_origins              = var.tfg_web_origins
+  realm_id                      = keycloak_realm.tfm.id
+  client_id                     = var.tfg_client_id
+  name                          = var.tfg_client_name
+  enabled                       = var.tfg_client_enabled
+  standard_flow_enabled         = var.tfg_standard_flow_enabled
+  direct_access_grants_enabled  = var.tfg_direct_access_grants_enabled
+  access_type                   = var.tfg_access_type
+  service_accounts_enabled      = var.tfg_service_accounts_enabled
+  valid_redirect_uris           = var.tfg_valid_redirect_uris
+  client_secret                 = var.tfg_client_secret
+  web_origins                   = var.tfg_web_origins
 }
 
 # Crear el usuario "kcv239"
@@ -68,6 +77,17 @@ resource "keycloak_user" "kcv239" {
     temporary = var.kcv239_temporary_password
     value     = var.kcv239_password_value
   }
+  email          = var.kcv239_email
+  email_verified = var.kcv239_email_verified
+  first_name     = var.kcv239_first_name
+  last_name      = var.kcv239_last_name
+}
+
+# Asignar el rol "default" al usuario "kcv239"
+resource "keycloak_user_roles" "kcv239" {
+  realm_id  = keycloak_realm.tfm.id
+  user_id   = keycloak_user.kcv239.id
+  role_ids  = [keycloak_role.default_role.id]
 }
 
 # Habilitar el metodo de autenticacion OIDC

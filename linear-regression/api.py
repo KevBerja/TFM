@@ -28,49 +28,9 @@ app.config.update({
 
 oidc = OpenIDConnect(app)
 
-@app.route('/')
-@oidc.require_login
-def home():
-    return render_template('index.html')
-
-@app.route('/vault_login')
-@oidc.require_login
-def vault_login():
-     # 1. Obtener el token de acceso de Keycloak (OIDC)
-    access_token = oidc.get_access_token()
-    if not access_token:
-        flash("No se encontró el token OIDC.")
-        return redirect(url_for('home'))
-
-    # 2. Intercambiar el token OIDC por un token de Vault a través del endpoint JWT
-    vault_url = "http://vault:8200/v1/auth/jwt/login"
-    payload = {
-        "jwt": access_token,
-        "role": "default"
-    }
-
-    try:
-        response = rq.post(vault_url, json=payload)
-        if response.status_code == 200:
-            vault_data = response.json()
-            if "auth" in vault_data and "client_token" in vault_data["auth"]:
-                vault_token = vault_data["auth"]["client_token"]
-                # Guardar el token de Vault en la sesión
-                session["vault_token"] = vault_token
-                flash("Autenticación en Vault (JWT) completada con éxito.")
-            else:
-                flash(f"Formato de respuesta de Vault inesperado: {vault_data}")
-        else:
-            flash(f"Fallo en la autenticación en Vault (HTTP {response.status_code}): {response.text}")
-    except Exception as e:
-        flash(f"Error al conectar con Vault: {str(e)}")
-
-    return redirect(url_for('home'))
-
-@app.route('/token_debug')
+@app.route('/token_debug', methods=['GET', 'POST'])
 @oidc.require_login
 def token_debug():
-    """Endpoint para depuracion de tokens OIDC"""
     debug_info = {
         "info": "Info de debug"
     }
@@ -104,10 +64,13 @@ def token_debug():
             "error": str(e),
             "trace": tr.format_exc()})
 
-@app.route('/login')
+@app.route('/')
 @oidc.require_login
+def home():
+    return render_template('index.html')
+
+@app.route('/login')
 def login():
-    # Si se ha iniciado sesion redirige a la pagina de inicio de la app
     return redirect(url_for('home'))
 
 @app.route('/logout')
@@ -116,8 +79,8 @@ def logout():
     flash("Sesión cerrada")
     return redirect(url_for('home'))
 
-@oidc.require_login
 @app.route('/loadInitCSV', methods=['GET'])
+@oidc.require_login
 def upload_file():
     return render_template('subida_fichero.html')
 
@@ -144,8 +107,8 @@ def uploader():
 
         return redirect('/loadInitCSV')
 
-@oidc.require_login
 @app.route('/loadModel', methods=['GET'])
+@oidc.require_login
 def loadModel():
     try:
         mydb = mysql.connector.connect(
@@ -199,8 +162,8 @@ def setModel():
             return redirect('/loadModel')
 
 
-@oidc.require_login
 @app.route('/deleteModel', methods=['GET', 'DELETE'])
+@oidc.require_login
 def wipe():
     try:
         folder_path = './static/model_temp' 
@@ -222,8 +185,8 @@ def wipe():
         
         return redirect('/')
 
-@oidc.require_login
 @app.route('/formTrain', methods=['GET'])
+@oidc.require_login
 def formTrain():
     return render_template('train.html')
 
@@ -348,8 +311,8 @@ def predict():
         else:
             return "ERROR - Se necesita primero subir el fichero de datos para entrenamiento y entrenar después al modelo"
 
-@oidc.require_login
 @app.route('/load_predict_form', methods=['GET'])
+@oidc.require_login
 def load_form():
     return render_template('formulario_predict.html')
 
@@ -380,8 +343,8 @@ def predict_form():
 
             return redirect('/load_predict_form')
 
-@oidc.require_login
 @app.route('/loadCSVToPredict', methods=['GET'])
+@oidc.require_login
 def uploadMassive():
     try:
         df = pd.read_csv('./static/model_temp/train.csv', encoding='latin-1')
