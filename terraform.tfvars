@@ -20,7 +20,7 @@ vault_valid_redirect_uris = [
   "http://localhost:8200/*",
   "http://vault:8250/*",
   "http://localhost:8250/*",
-  "https://oauth.pstmn.io/v1/callback"
+  "https://oauth.pstmn.io/*"
 ]
 vault_web_origins = ["*"]
 
@@ -33,7 +33,8 @@ tfg_service_accounts_enabled = true
 tfg_valid_redirect_uris = [
   "http://localhost:5000/*",
   "http://localhost:5001/*",
-  "http://localhost:5002/*"
+  "http://localhost:5002/*",
+  "https://oauth.pstmn.io/*"
 ]
 tfg_web_origins = ["*"]
 
