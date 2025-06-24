@@ -30,6 +30,13 @@ resource "keycloak_realm" "tfm" {
   enabled = var.keycloak_realm_enabled
 }
 
+# Crear rol "admin" para el realm "tfm"
+resource "keycloak_role" "admin_role" {
+  realm_id    = keycloak_realm.tfm.id
+  name        = var.keycloak_admin_role_name
+  description = var.keycloak_admin_role_description
+}
+
 # Crear rol "default" para el realm "tfm"
 resource "keycloak_role" "default_role" {
   realm_id    = keycloak_realm.tfm.id
@@ -65,6 +72,29 @@ resource "keycloak_openid_client" "tfg" {
   valid_redirect_uris           = var.tfg_valid_redirect_uris
   client_secret                 = var.tfg_client_secret
   web_origins                   = var.tfg_web_origins
+}
+
+# Crear el usuario "admin"
+resource "keycloak_user" "admin" {
+  realm_id = keycloak_realm.tfm.id
+  username = var.admin_username
+  enabled  = var.admin_enabled
+
+  initial_password {
+    temporary = var.admin_temporary_password
+    value     = var.admin_password_value
+  }
+  email          = var.admin_email
+  email_verified = var.admin_email_verified
+  first_name     = var.admin_first_name
+  last_name      = var.admin_last_name
+}
+
+# Asignar el rol "admin" al usuario "admin"
+resource "keycloak_user_roles" "admin" {
+  realm_id  = keycloak_realm.tfm.id
+  user_id   = keycloak_user.admin.id
+  role_ids  = [keycloak_role.admin_role.id]
 }
 
 # Crear el usuario "kcv239"

@@ -10,6 +10,8 @@ keycloak_realm_name                = "tfm"
 keycloak_realm_enabled             = true
 keycloak_default_role_name         = "default"
 keycloak_default_role_description  = "role_tfm-default"
+keycloak_admin_role_name           = "admin"
+keycloak_admin_role_description    = "role_tfm-admin"
 
 vault_client_id                     = "vault"
 vault_client_name                   = "vault"
@@ -42,6 +44,15 @@ tfg_valid_redirect_uris = [
   "https://oauth.pstmn.io/*"
 ]
 tfg_web_origins = ["*"]
+
+admin_username            = "admin"
+admin_email               = "admin@admin.com"
+admin_email_verified      = true
+admin_first_name          = "Admin"
+admin_last_name           = "Admin"
+admin_enabled             = true
+admin_temporary_password  = false
+admin_password_value      = "admin"
 
 kcv239_username           = "kcv239"
 kcv239_email              = "kcv239@inlumine.ual.es"

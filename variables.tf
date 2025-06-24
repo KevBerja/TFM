@@ -57,12 +57,21 @@ variable "keycloak_realm_enabled" {
   type        = bool
 }
 
+variable "keycloak_admin_role_name" {
+  description = "Admin role name for the realm"
+  type        = string
+}
+variable "keycloak_admin_role_description" {
+  description = "Admin role description for the realm"
+  type        = string
+}
+
 variable "keycloak_default_role_name" {
   description = "Default role name for the realm"
   type        = string
 }
 variable "keycloak_default_role_description" {
-  description = "Default role description for realm"
+  description = "Default role description for the realm"
   type        = string
 }
 
@@ -194,6 +203,47 @@ variable "kcv239_first_name" {
 
 variable "kcv239_last_name" {
   description = "Last name for kcv239"
+  type        = string
+}
+
+variable "admin_username" {
+  description = "Username for admin"
+  type        = string
+}
+
+variable "admin_enabled" {
+  description = "Whether admin is enabled"
+  type        = bool
+}
+
+variable "admin_temporary_password" {
+  description = "Whether the initial password for admin is temporary"
+  type        = bool
+}
+
+variable "admin_password_value" {
+  description = "Initial password value for admin"
+  type        = string
+  sensitive   = true
+}
+
+variable "admin_email" {
+  description = "Email for admin"
+  type        = string
+}
+
+variable "admin_email_verified" {
+  description = "Whether the email for admin is verified"
+  type        = bool
+}
+
+variable "admin_first_name" {
+  description = "First name for admin"
+  type        = string
+}
+
+variable "admin_last_name" {
+  description = "Last name for admin"
   type        = string
 }
 

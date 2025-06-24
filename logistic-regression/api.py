@@ -1,9 +1,8 @@
 import sys
+import os
 import logging
 import json
-import requests
 import jwt 
-import os
 import shutil
 import joblib as jb
 import traceback as tr
@@ -51,22 +50,31 @@ oidc = OpenIDConnect(app)
 # Permisos
 REQUIRED_PERMISSIONS = {
     'admin_dashboard':   ['admin'],
-    'upload_file':       ['default'],
-    'setModel':          ['default'],
-    'wipe':              ['default'],
-    'train':             ['default'],
-    'predict':           ['default'],
-    'predict_form':      ['default'],
-    'predictMassive':    ['default'],
-    'token_debug':       ['default']
+    'upload_file':       ['admin'],
+    'uploader':          ['admin'],
+    'loadModel':         ['admin'],
+    'setModel':          ['admin'],
+    'wipe':              ['admin'],
+    'formTrain':         ['admin'],
+    'train':             ['admin'],
+    'predict':           ['default', 'admin'],
+    'load_form':         ['default', 'admin'],
+    'load_predict_form': ['default', 'admin'],
+    'predict_form':      ['default', 'admin'],
+    'uploadMassive':     ['default', 'admin'],
+    'predictMassive':    ['default', 'admin'],
+    'token_debug':       ['default', 'admin'],
+    'vault_login':       ['default', 'admin'],
+    'home':              ['default', 'admin'],
+
 }
 
 PUBLIC_ENDPOINTS = ('static', 'favicon.ico', 'login', 'logout')
 
 @app.before_request
-def check_token_JWT():
+def checkJWTToken():
     # 1) Verificar si el endpoint es una ruta no protegida
-    if request.endpoint in PUBLIC_ENDPOINTS or request.endpoint or request.path.startswith('/authorize') is None:
+    if (request.endpoint in PUBLIC_ENDPOINTS) or request.path.startswith('/authorize') or request.blueprint == 'oidc_auth':
         return
 
     # 2) Comprobar si hay en la cabecera un bearer token
@@ -103,8 +111,6 @@ def check_token_JWT():
         if oidc.user_loggedin:
             # Sesion valida
             return
-        # No hay sesion se redirecciona login OIDC
-        return redirect(url_for('login', next=request.url))
 
     # 5) Si no hay permisos previamente configurados para el endpoint denegar acceso
     if request.method in ('GET', 'POST', 'DELETE', 'PUT') and request.endpoint not in REQUIRED_PERMISSIONS:
@@ -114,11 +120,11 @@ def check_token_JWT():
         }), 403
 
     # 6) Comprobar permisos configurados
-    permisos = REQUIRED_PERMISSIONS.get(request.endpoint, [])
-    if permisos and not any(r in roles for r in permisos):
+    permissions = REQUIRED_PERMISSIONS.get(request.endpoint, [])
+    if  permissions and not any(r in roles for r in  permissions):
         return jsonify({
             "error": "Forbidden",
-            "required_permissions": permisos
+            "required_permissions": permissions
         }), 403
         
     
@@ -193,13 +199,13 @@ def vault_login():
     return redirect(url_for('home'))
 
 @app.route('/')
+@oidc.require_login
 def home():
     return render_template('index.html')
 
 @app.route('/login')
 def login():
-    next_url = request.args.get('next') or url_for('home')
-    return oidc.redirect_to_auth_server(next_url)
+    return redirect(url_for('home'))
 
 @app.route('/logout')
 def logout():

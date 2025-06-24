@@ -1,13 +1,16 @@
 import sys
 import os
+import logging
 import shutil
 import joblib as jb
 import traceback as tr
 import pandas as pd
 import numpy as np
+import requests as rq
 import mysql.connector
 
 from flask import Flask, request, jsonify, render_template, redirect, session, flash, send_file
+from flask_session import Session
 from werkzeug.utils import secure_filename
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -16,6 +19,15 @@ from flask_oidc import OpenIDConnect
 
 app = Flask(__name__)
 app.secret_key = 'kcv239RandomForest'
+
+# Configuracion de sesion
+app.config.update({
+    'SESSION_TYPE': 'filesystem',
+    'SESSION_FILE_DIR': '/tmp/flask_session',
+    'SESSION_PERMANENT': False
+})
+
+Session(app)
 
 
 @app.route('/')

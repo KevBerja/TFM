@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 import shutil
 import traceback as tr
 import requests as rq
@@ -9,6 +10,7 @@ import joblib as jb
 import mysql.connector
 
 from flask import Flask, request, jsonify, render_template, url_for, redirect, session, flash, send_file
+from flask_session import Session
 from werkzeug.utils import secure_filename
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
@@ -23,8 +25,14 @@ app.config.update({
     'OIDC_CLIENT_SECRETS': './client_secrets.json',
     'OIDC_ID_TOKEN_COOKIE_SECURE': False,
     'OIDC_SCOPES': ['openid'],
-    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post'
+    'OIDC_INTROSPECTION_AUTH_METHOD': 'client_secret_post',
+    'SESSION_TYPE': 'filesystem',
+    'SESSION_FILE_DIR': '/tmp/flask_session',
+    'SESSION_PERMANENT': False
 })
+
+Session(app)
+
 
 oidc = OpenIDConnect(app)
 
