@@ -9,7 +9,7 @@ import pandas as pd
 import joblib as jb
 import mysql.connector
 
-from flask import Flask, request, jsonify, render_template, url_for, redirect, session, flash, send_file
+from flask import Flask, request, jsonify, render_template, url_for, redirect, session, flash, send_file, current_app
 from flask_session import Session
 from werkzeug.utils import secure_filename
 from sklearn.linear_model import LinearRegression
@@ -33,20 +33,19 @@ app.config.update({
 
 Session(app)
 
-
 oidc = OpenIDConnect(app)
 
-@app.route('/token_debug', methods=['GET', 'POST'])
+@app.route('/token_debug')
 @oidc.require_login
 def token_debug():
     debug_info = {
-        "info": "Info de debug"
+        "info": "Debug token data"
     }
     
     try:
         # Obtener token de acceso del proveedor OIDC
         access_token = oidc.get_access_token()
-        debug_info["Access_Token_OIDC_Provider_Get_Method"] = f"{access_token}" if access_token else "No disponible"
+        debug_info["Access_Token_OIDC"] = f"{access_token}" if access_token else "Not avaliable"
         
         # Obtener informacion del usuario
         if hasattr(oidc, 'user_getinfo'):
@@ -59,7 +58,7 @@ def token_debug():
             if token_info:
                 debug_info["token_info"] = {k: v for k, v in token_info.items() if k != 'access_token'}
                 if 'access_token' in token_info:
-                    debug_info["Access_Token_Session_Get_Method"] = f"{token_info['access_token']}"
+                    debug_info["Access_Token_Session"] = f"{token_info['access_token']}"
         
         # Intentar obtener token de sesion Flask
         if 'oidc_id_token' in session:
@@ -170,7 +169,7 @@ def setModel():
             return redirect('/loadModel')
 
 
-@app.route('/deleteModel', methods=['GET', 'DELETE'])
+@app.route('/deleteModel', methods=['DELETE'])
 @oidc.require_login
 def wipe():
     try:

@@ -63,8 +63,6 @@ REQUIRED_PERMISSIONS = {
     'predict_form':      ['default', 'admin'],
     'uploadMassive':     ['default', 'admin'],
     'predictMassive':    ['default', 'admin'],
-    'token_debug':       ['default', 'admin'],
-    'vault_login':       ['default', 'admin'],
     'home':              ['default', 'admin'],
 
 }
@@ -126,77 +124,6 @@ def checkJWTToken():
             "error": "Forbidden",
             "required_permissions": permissions
         }), 403
-        
-    
-@app.route('/token_debug', methods=['GET', 'POST'])
-@oidc.require_login
-def token_debug():
-    debug_info = {
-        "info": "Info de debug"
-    }
-    
-    try:
-        # Obtener token de acceso del proveedor OIDC
-        access_token = oidc.get_access_token()
-        debug_info["Access_Token_OIDC_Provider_Get_Method"] = f"{access_token}" if access_token else "No disponible"
-        
-        # Obtener informacion del usuario
-        if hasattr(oidc, 'user_getinfo'):
-            user_info = oidc.user_getinfo(['email', 'sub', 'preferred_username'])
-            debug_info["user_info"] = user_info
-        
-        # Obtener detalles de la sesion OIDC
-        if hasattr(oidc, '_get_token_info'):
-            token_info = oidc._get_token_info()
-            if token_info:
-                debug_info["token_info"] = {k: v for k, v in token_info.items() if k != 'access_token'}
-                if 'access_token' in token_info:
-                    debug_info["Access_Token_Session_Get_Method"] = f"{token_info['access_token']}"
-        
-        # Obtener token de sesion Flask
-        if 'oidc_id_token' in session:
-            debug_info["id_token_in_session"] = True
-        
-        return jsonify(debug_info)
-    
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "trace": tr.format_exc()})
-    
-@app.route('/vault_login')
-@oidc.require_login
-def vault_login():
-     # 1. Obtener el token de acceso de Keycloak (OIDC)
-    access_token = oidc.get_access_token()
-    if not access_token:
-        flash("No se encontró el token OIDC.")
-        return redirect(url_for('home'))
-
-    # 2. Intercambiar el token OIDC por un token de Vault a través del endpoint JWT
-    vault_url = "http://vault:8200/v1/auth/jwt/login"
-    payload = {
-        "jwt": access_token,
-        "role": "default"
-    }
-
-    try:
-        response = rq.post(vault_url, json=payload)
-        if response.status_code == 200:
-            vault_data = response.json()
-            if "auth" in vault_data and "client_token" in vault_data["auth"]:
-                vault_token = vault_data["auth"]["client_token"]
-                # Guardar el token de Vault en la sesión
-                session["vault_token"] = vault_token
-                flash("Autenticación en Vault (JWT) completada con éxito.")
-            else:
-                flash(f"Formato de respuesta de Vault inesperado: {vault_data}")
-        else:
-            flash(f"Fallo en la autenticación en Vault (HTTP {response.status_code}): {response.text}")
-    except Exception as e:
-        flash(f"Error al conectar con Vault: {str(e)}")
-
-    return redirect(url_for('home'))
 
 @app.route('/')
 @oidc.require_login
@@ -298,7 +225,7 @@ def setModel():
 
 
 
-@app.route('/deleteModel', methods=['GET', 'DELETE'])
+@app.route('/deleteModel', methods=['DELETE'])
 @oidc.require_login
 def wipe():
     try:

@@ -6,5 +6,6 @@ scikit-learn
 werkzeug
 mysql-connector
 flask_oidc
+flask-session
 requests
-Flask-Session
+flask-session

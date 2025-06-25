@@ -8,4 +8,4 @@ mysql-connector
 flask_oidc
 requests
 PyJWT
-Flask-Session
+flask-session

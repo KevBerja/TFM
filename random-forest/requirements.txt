@@ -7,4 +7,4 @@ werkzeug
 mysql-connector
 flask_oidc
 requests
-Flask-Session
+flask-session

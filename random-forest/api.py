@@ -29,11 +29,9 @@ app.config.update({
 
 Session(app)
 
-
 @app.route('/')
 def home():
     return render_template('index.html')
-
 
 @app.route('/loadInitCSV', methods=['GET'])
 def upload_file():
@@ -118,7 +116,7 @@ def setModel():
 
 
 
-@app.route('/deleteModel', methods=['GET', 'DELETE'])
+@app.route('/deleteModel', methods=['DELETE'])
 def wipe():
     try:
         folder_path = './static/model_temp' 
